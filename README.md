@@ -17,8 +17,8 @@
 
 ### 1. 克隆仓库
 ```bash
-git clone [https://github.com/your-username/fastapi-telegram-support.git](https://github.com/your-username/fastapi-telegram-support.git)
-cd fastapi-telegram-support  
+git clone [https://github.com/xiaoyu132223/Customer-service-bot.git](https://github.com/xiaoyu132223/Customer-service-bot.git)
+cd Customer-service-bot
 ```
 
 ### 2. 安装依赖
