@@ -17,12 +17,5 @@
 ### 1. 克隆仓库
 ```bash
 git clone [https://github.com/your-username/fastapi-telegram-support.git](https://github.com/your-username/fastapi-telegram-support.git)
-cd fastapi-telegram-support
-
-
-
-
-
-
-
-123
+cd fastapi-telegram-support  
+```
