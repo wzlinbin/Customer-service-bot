@@ -1,3 +1,4 @@
+全部内容来自AI操作
 这是一个基于 **FastAPI** 和 **Telegram Bot** 的轻量级网页在线客服系统。
 用户在网页端发送消息（支持文本和图片），管理员在 Telegram 接收并直接回复，系统会自动将回复推送到网页端。
 
@@ -23,4 +24,33 @@ cd fastapi-telegram-support
 ### 2. 安装依赖
 ```bash
 pip install -r requirements.txt
+```
+### 3. 配置机器人
+打开 chat_router.py修改
+TG_BOT_TOKEN = "你的_TOKEN"
+TG_ADMIN_ID = "你的_ID"
+这两段
+
+### 4. 运行示例
+```bash
+python example_main.py
+```
+打开浏览器访问 http://127.0.0.1:8000 即可看到效果。
+
+🧩 如何集成到你的项目中
+复制文件：将 chat_router.py 和 templates/chat_widget.html 复制到你的项目。
+挂载路由 (main.py)：
+```bash
+from chat_router import router as chat_router, telegram_polling_loop
+
+app.include_router(chat_router)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(telegram_polling_loop())
+```
+
+引入前端： 在你的 HTML 模板底部加入
+```bash
+{% include 'chat_widget.html' %}
 ```
