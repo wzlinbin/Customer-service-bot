@@ -17,7 +17,7 @@
 
 ### 1. 克隆仓库
 ```bash
-git clone [https://github.com/xiaoyu132223/Customer-service-bot.git](https://github.com/xiaoyu132223/Customer-service-bot.git)
+git clone https://github.com/xiaoyu132223/Customer-service-bot.git
 cd Customer-service-bot
 ```
 
