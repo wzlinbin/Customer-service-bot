@@ -54,3 +54,6 @@ async def startup_event():
 ```bash
 {% include 'chat_widget.html' %}
 ```
+![截图](https://github.com/user-attachments/assets/96b579a6-6117-4584-9ebb-dec93e1ccafa)
+
+
