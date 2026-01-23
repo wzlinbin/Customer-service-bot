@@ -18,3 +18,4 @@
 ```bash
 git clone [https://github.com/your-username/fastapi-telegram-support.git](https://github.com/your-username/fastapi-telegram-support.git)
 cd fastapi-telegram-support
+bash
