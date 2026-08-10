@@ -41,9 +41,11 @@
 </div>
 
 <script>
-    let sessionId = localStorage.getItem('chat_sid');
-    if (!sessionId) { sessionId = 'u_' + Math.random().toString(36).substr(2, 8); localStorage.setItem('chat_sid', sessionId); }
-    let nickname = localStorage.getItem('chat_nickname');
+    localStorage.removeItem('chat_sid');
+    localStorage.removeItem('chat_nickname');
+    let sessionId = sessionStorage.getItem('chat_sid');
+    if (!sessionId) { sessionId = 'u_' + Math.random().toString(36).substr(2, 8); sessionStorage.setItem('chat_sid', sessionId); }
+    let nickname = sessionStorage.getItem('chat_nickname');
     let knownMsgIds = new Set();
     let pollTimer = null;
 
@@ -57,7 +59,7 @@
         const name = document.getElementById('nickname-input').value.trim();
         if (!name) return alert("请先输入称呼");
         await fetch('/api/chat/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, nickname: name }) });
-        localStorage.setItem('chat_nickname', name);
+        sessionStorage.setItem('chat_nickname', name);
         nickname = name;
         showChatView();
     }

@@ -12,6 +12,7 @@
     apiBase = apiBase.replace(/\/+$/, "");
 
     var storagePrefix = "api2cn_chat_";
+    clearLegacyStorage();
     var sessionId = readStorage(storagePrefix + "sid");
     var nickname = readStorage(storagePrefix + "nickname");
     var knownMessageIds = new Set();
@@ -281,7 +282,7 @@
 
     function readStorage(key) {
         try {
-            return window.localStorage.getItem(key);
+            return window.sessionStorage.getItem(key);
         } catch (error) {
             return null;
         }
@@ -289,9 +290,18 @@
 
     function writeStorage(key, value) {
         try {
-            window.localStorage.setItem(key, value);
+            window.sessionStorage.setItem(key, value);
         } catch (error) {
             // The widget still works for the current page when storage is blocked.
+        }
+    }
+
+    function clearLegacyStorage() {
+        try {
+            window.localStorage.removeItem(storagePrefix + "sid");
+            window.localStorage.removeItem(storagePrefix + "nickname");
+        } catch (error) {
+            // Ignore browsers that block access to local storage.
         }
     }
 })();
