@@ -37,9 +37,12 @@
         "*{box-sizing:border-box}",
         "button,input{font:inherit}",
         "button{border:0}",
-        ".launcher{position:absolute;right:24px;bottom:24px;height:56px;padding:0 24px;border-radius:28px;background:#2867ed;color:#fff;display:flex;align-items:center;gap:11px;font-size:17px;font-weight:700;box-shadow:0 12px 28px rgba(40,103,237,.28);cursor:pointer;pointer-events:auto;transition:transform .18s,background .18s}",
+        ".launcher-row{position:absolute;right:24px;bottom:24px;display:flex;align-items:center;gap:8px;pointer-events:auto}",
+        ".launcher{height:56px;padding:0 24px;border-radius:28px;background:#2867ed;color:#fff;display:flex;align-items:center;gap:11px;font-size:17px;font-weight:700;box-shadow:0 12px 28px rgba(40,103,237,.28);cursor:pointer;transition:transform .18s,background .18s}",
         ".launcher:hover{transform:translateY(-2px);background:#1f5adb}",
-        ".launcher:focus-visible,.close:focus-visible,.send:focus-visible,.upload:focus-within{outline:3px solid rgba(59,130,246,.35);outline-offset:2px}",
+        ".dismiss{width:32px;height:32px;flex:0 0 32px;border:1px solid #d9dee8;border-radius:50%;background:#fff;color:#667085;display:grid;place-items:center;font-size:22px;line-height:1;box-shadow:0 5px 16px rgba(15,23,42,.14);cursor:pointer}",
+        ".dismiss:hover{background:#f5f7fa;color:#1f2937}",
+        ".launcher:focus-visible,.dismiss:focus-visible,.close:focus-visible,.send:focus-visible,.upload:focus-within{outline:3px solid rgba(59,130,246,.35);outline-offset:2px}",
         ".chat-icon{width:24px;height:18px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;gap:2px;position:relative}",
         ".chat-icon:after{content:'';position:absolute;left:4px;bottom:-3px;border-width:3px 3px 0 0;border-style:solid;border-color:#fff transparent transparent transparent}",
         ".chat-icon i{width:3px;height:3px;border-radius:50%;background:#2867ed}",
@@ -74,12 +77,12 @@
         ".send{height:38px;padding:0 4px;background:transparent;color:#2867ed;font-weight:700;cursor:pointer}",
         ".notice{display:none;padding:8px 14px;background:#fff3f2;color:#b42318;font-size:12px;border-bottom:1px solid #fecdca}",
         ".notice.show{display:block}",
-        "@media(max-width:520px){.launcher{right:16px;bottom:16px}.panel{right:8px;bottom:80px;width:calc(100vw - 16px);height:calc(100vh - 96px)}}",
+        "@media(max-width:520px){.launcher-row{right:16px;bottom:16px}.panel{right:8px;bottom:80px;width:calc(100vw - 16px);height:calc(100vh - 96px)}}",
         "@media(prefers-reduced-motion:reduce){.launcher{transition:none}}",
         "</style>",
-        "<button class='launcher' type='button' aria-expanded='false' aria-controls='api2cn-chat-panel'>",
+        "<div class='launcher-row'><button class='launcher' type='button' aria-expanded='false' aria-controls='api2cn-chat-panel'>",
         "<span class='chat-icon' aria-hidden='true'><i></i><i></i><i></i></span><span>在线客服</span>",
-        "</button>",
+        "</button><button class='dismiss' type='button' title='关闭在线客服' aria-label='关闭在线客服'>&times;</button></div>",
         "<section class='panel' id='api2cn-chat-panel' aria-label='在线客服'>",
         "<header class='header'><div><div class='title'>客服支持 <span class='dot' aria-label='在线'></span></div><div class='status'>未连接</div></div><button class='close' type='button' aria-label='关闭客服窗口'>&times;</button></header>",
         "<div class='notice' role='alert'></div>",
@@ -89,6 +92,7 @@
     ].join("");
 
     var launcher = root.querySelector(".launcher");
+    var dismissButton = root.querySelector(".dismiss");
     var panel = root.querySelector(".panel");
     var closeButton = root.querySelector(".close");
     var loginForm = root.querySelector(".login");
@@ -124,6 +128,11 @@
         launcher.setAttribute("aria-expanded", "false");
         stopPolling();
         launcher.focus();
+    });
+
+    dismissButton.addEventListener("click", function () {
+        stopPolling();
+        host.remove();
     });
 
     loginForm.addEventListener("submit", async function (event) {

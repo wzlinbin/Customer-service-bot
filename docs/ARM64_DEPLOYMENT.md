@@ -307,6 +307,26 @@ Telegram。程序默认每小时清理一次超过 24 小时的会话和消息�
 
 ## 12. 常见故障
 
+### ModuleNotFoundError: No module named 'dotenv'
+
+这表示代码已经更新，但虚拟环境没有安装新版 requirements.txt 中的
+python-dotenv。先停止 systemd 的重复重启，再更新依赖：
+
+    systemctl stop customer-service-bot
+    cd ~/Customer-service-bot
+    ./.venv/bin/python -m pip install -r requirements.txt
+    ./.venv/bin/python \
+      -c "from dotenv import load_dotenv; print('python-dotenv OK')"
+    systemctl start customer-service-bot
+
+确认服务恢复：
+
+    systemctl status customer-service-bot --no-pager
+    journalctl -u customer-service-bot -n 100 --no-pager
+
+不要使用系统 Python 的 pip 安装；必须使用
+~/Customer-service-bot/.venv/bin/python 对应的虚拟环境。
+
 ### 应用无法访问
 
 检查 systemd 和受保护的挂件资源：
