@@ -83,7 +83,7 @@
         "<section class='panel' id='api2cn-chat-panel' aria-label='在线客服'>",
         "<header class='header'><div><div class='title'>客服支持 <span class='dot' aria-label='在线'></span></div><div class='status'>未连接</div></div><button class='close' type='button' aria-label='关闭客服窗口'>&times;</button></header>",
         "<div class='notice' role='alert'></div>",
-        "<form class='login'><div class='avatar' aria-hidden='true'>☺</div><h2>欢迎咨询</h2><p>请设置一个称呼方便我们称呼您</p><input class='name' type='text' maxlength='50' autocomplete='name' placeholder='例如：张老板' aria-label='您的称呼'><button class='start' type='submit'>开始对话</button></form>",
+        "<form class='login'><div class='avatar' aria-hidden='true'>☺</div><h2>欢迎咨询</h2><p>请设置一个称呼方便我们称呼您</p><input class='name' type='text' maxlength='50' autocomplete='name' placeholder='nickname' aria-label='您的称呼'><button class='start' type='submit'>开始对话</button></form>",
         "<div class='messages-view'><div class='messages' aria-live='polite'></div><form class='composer'><label class='upload' title='发送图片' aria-label='发送图片'>&#128206;<input type='file' accept='image/*'></label><input class='message-input' type='text' maxlength='2000' placeholder='输入消息...' aria-label='输入消息'><button class='send' type='submit'>发送</button></form></div>",
         "</section>"
     ].join("");

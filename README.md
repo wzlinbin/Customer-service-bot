@@ -17,7 +17,7 @@
 
 ### 1. 克隆仓库
 ```bash
-git clone https://github.com/xiaoyu132223/Customer-service-bot.git
+git clone https://github.com/wzlinbin/Customer-service-bot.git
 cd Customer-service-bot
 ```
 
@@ -37,7 +37,7 @@ python main.py
 ```
 打开浏览器访问 http://127.0.0.1:8000 即可看到效果。
 
-ARM64 服务器、Python 虚拟环境、systemd、Nginx 和 HTTPS 的完整部署步骤见：
+ARM64 服务器使用 root、Python 虚拟环境和 systemd 持续运行的部署步骤见：
 [ARM64 服务器部署指南](docs/ARM64_DEPLOYMENT.md)。
 
 🧩 如何集成到你的项目中
@@ -59,33 +59,19 @@ async def startup_event():
 ```
 ![截图](https://github.com/user-attachments/assets/96b579a6-6117-4584-9ebb-dec93e1ccafa)
 
-## 跨域嵌入
+## Sub2API 安全集成
 
-将本项目部署在 https://custom.api2cn.com 后，在
-https://api.api2cn.com 的页面底部加入：
+生产环境使用服务端代理：
 
-    <script
-      src="https://custom.api2cn.com/static/chat-widget.js"
-      data-api-base="https://custom.api2cn.com"
-      defer>
-    </script>
+    浏览器
+      -> api.api2cn.com/customer-service/*
+        -> Sub2API 服务端添加 X-API-Key
+          -> custom.api2cn.com
 
-挂件使用 Shadow DOM 和自带样式，不需要目标网页加载 Tailwind CSS。
+固定密钥不会写入网页或 chat-widget.js。客服服务端会关闭根页面、API 文档，
+并要求所有静态挂件和聊天 API 请求携带正确的 X-API-Key。
 
-默认允许所有 api2cn.com 子域，以及本机测试地址跨域访问聊天接口：
-
-    http://*.api2cn.com
-    https://*.api2cn.com
-    http://127.0.0.1:任意端口
-    https://127.0.0.1:任意端口
-    http://localhost:任意端口
-    https://localhost:任意端口
-
-可以通过 CHAT_ALLOWED_ORIGIN_REGEX 环境变量覆盖默认正则，也可以通过
-CHAT_ALLOWED_ORIGINS 添加其他精确来源，多个来源使用英文逗号分隔。
-
-如果目标网站设置了 Content-Security-Policy，还需要将
-https://custom.api2cn.com 加入 script-src 和 connect-src，并允许
-style-src 使用 'unsafe-inline' 以加载挂件内置样式。
+Sub2API 补丁、双方环境变量、自定义镜像构建和验证步骤见：
+[Sub2API 安全集成指南](integrations/sub2api/README.md)。
 
 

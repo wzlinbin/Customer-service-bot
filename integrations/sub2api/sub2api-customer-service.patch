@@ -1,0 +1,442 @@
+diff --git a/backend/internal/server/router.go b/backend/internal/server/router.go
+index c7ac774..3fc040e 100644
+--- a/backend/internal/server/router.go
++++ b/backend/internal/server/router.go
+@@ -124,6 +124,7 @@ func registerRoutes(
+ 	panelRateLimiter := middleware2.NewPanelRateLimiter(redisClient, settingService)
+ 
+ 	// 注册各模块路由
++	routes.RegisterCustomerServiceRoutes(r, panelRateLimiter)
+ 	routes.RegisterAuthRoutes(v1, h, jwtAuth, auditLog, redisClient, settingService, panelRateLimiter)
+ 	routes.RegisterUserRoutes(v1, h, jwtAuth, auditLog, settingService, panelRateLimiter)
+ 	routes.RegisterModelPlazaRoutes(v1, h, optionalJWTAuth, settingService, panelRateLimiter)
+diff --git a/backend/internal/server/routes/customer_service.go b/backend/internal/server/routes/customer_service.go
+new file mode 100644
+index 0000000..3c14f29
+--- /dev/null
++++ b/backend/internal/server/routes/customer_service.go
+@@ -0,0 +1,187 @@
++package routes
++
++import (
++	"bytes"
++	"errors"
++	"io"
++	"log/slog"
++	"net/http"
++	"net/url"
++	"os"
++	"strings"
++	"time"
++
++	servermiddleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
++	"github.com/gin-gonic/gin"
++)
++
++const (
++	customerServiceBaseURLEnv = "CUSTOMER_SERVICE_BASE_URL"
++	customerServiceAPIKeyEnv  = "CUSTOMER_SERVICE_API_KEY"
++	customerServiceMaxBody    = 10 << 20
++)
++
++type customerServiceProxy struct {
++	baseURL   *url.URL
++	apiKey    string
++	client    *http.Client
++	configErr error
++}
++
++// RegisterCustomerServiceRoutes exposes a narrow same-origin proxy for the
++// customer-service widget. The shared key is added server-side and is never
++// returned to the browser.
++func RegisterCustomerServiceRoutes(
++	r *gin.Engine,
++	panelRateLimiter *servermiddleware.PanelRateLimiter,
++) {
++	proxy := newCustomerServiceProxyFromEnv()
++	group := r.Group("/customer-service")
++	if panelRateLimiter != nil {
++		group.Use(panelRateLimiter.PublicIP())
++	}
++
++	group.GET("/chat-widget.js", proxy.handle("/static/chat-widget.js"))
++	group.POST("/api/chat/login", proxy.handle("/api/chat/login"))
++	group.POST("/api/chat/send", proxy.handle("/api/chat/send"))
++	group.POST("/api/chat/upload", proxy.handle("/api/chat/upload"))
++	group.GET("/api/chat/poll", proxy.handle("/api/chat/poll"))
++}
++
++func newCustomerServiceProxyFromEnv() *customerServiceProxy {
++	rawBaseURL := strings.TrimSpace(os.Getenv(customerServiceBaseURLEnv))
++	apiKey := strings.TrimSpace(os.Getenv(customerServiceAPIKeyEnv))
++
++	baseURL, err := parseCustomerServiceBaseURL(rawBaseURL)
++	if err == nil && apiKey == "" {
++		err = errors.New("customer service API key is not configured")
++	}
++	if err != nil {
++		slog.Warn("customer service proxy is unavailable", "error", err)
++	}
++
++	return &customerServiceProxy{
++		baseURL: baseURL,
++		apiKey:  apiKey,
++		client: &http.Client{
++			Timeout: 30 * time.Second,
++			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
++				return http.ErrUseLastResponse
++			},
++		},
++		configErr: err,
++	}
++}
++
++func parseCustomerServiceBaseURL(raw string) (*url.URL, error) {
++	if raw == "" {
++		return nil, errors.New("customer service base URL is not configured")
++	}
++
++	parsed, err := url.Parse(raw)
++	if err != nil {
++		return nil, errors.New("customer service base URL is invalid")
++	}
++	if (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
++		return nil, errors.New("customer service base URL must be absolute HTTP(S)")
++	}
++	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
++		return nil, errors.New("customer service base URL cannot contain credentials, query, or fragment")
++	}
++	parsed.Path = strings.TrimRight(parsed.Path, "/")
++	return parsed, nil
++}
++
++func (p *customerServiceProxy) handle(upstreamPath string) gin.HandlerFunc {
++	return func(c *gin.Context) {
++		if p.configErr != nil {
++			c.JSON(http.StatusServiceUnavailable, gin.H{
++				"code":    "CUSTOMER_SERVICE_UNAVAILABLE",
++				"message": "Customer service is unavailable",
++			})
++			return
++		}
++
++		body, err := readCustomerServiceBody(c.Request)
++		if err != nil {
++			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
++				"code":    "PAYLOAD_TOO_LARGE",
++				"message": "Request body is too large",
++			})
++			return
++		}
++
++		target := *p.baseURL
++		target.Path += upstreamPath
++		target.RawQuery = c.Request.URL.RawQuery
++
++		request, err := http.NewRequestWithContext(
++			c.Request.Context(),
++			c.Request.Method,
++			target.String(),
++			bytes.NewReader(body),
++		)
++		if err != nil {
++			c.JSON(http.StatusBadGateway, gin.H{
++				"code":    "CUSTOMER_SERVICE_BAD_GATEWAY",
++				"message": "Customer service request failed",
++			})
++			return
++		}
++		if contentType := c.GetHeader("Content-Type"); contentType != "" {
++			request.Header.Set("Content-Type", contentType)
++		}
++		if accept := c.GetHeader("Accept"); accept != "" {
++			request.Header.Set("Accept", accept)
++		}
++		request.Header.Set("X-API-Key", p.apiKey)
++
++		response, err := p.client.Do(request)
++		if err != nil {
++			slog.Warn("customer service upstream request failed", "error", err)
++			c.JSON(http.StatusBadGateway, gin.H{
++				"code":    "CUSTOMER_SERVICE_BAD_GATEWAY",
++				"message": "Customer service request failed",
++			})
++			return
++		}
++		defer response.Body.Close()
++
++		copyCustomerServiceResponseHeader(c, response.Header)
++		c.Status(response.StatusCode)
++		if _, err := io.Copy(c.Writer, response.Body); err != nil {
++			slog.Warn("customer service response copy failed", "error", err)
++		}
++	}
++}
++
++func readCustomerServiceBody(request *http.Request) ([]byte, error) {
++	if request.Body == nil {
++		return nil, nil
++	}
++	if request.ContentLength > customerServiceMaxBody {
++		return nil, errors.New("request body is too large")
++	}
++
++	body, err := io.ReadAll(io.LimitReader(request.Body, customerServiceMaxBody+1))
++	if err != nil {
++		return nil, err
++	}
++	if len(body) > customerServiceMaxBody {
++		return nil, errors.New("request body is too large")
++	}
++	return body, nil
++}
++
++func copyCustomerServiceResponseHeader(c *gin.Context, header http.Header) {
++	for _, name := range []string{
++		"Cache-Control",
++		"Content-Type",
++		"ETag",
++		"Last-Modified",
++	} {
++		if value := header.Get(name); value != "" {
++			c.Header(name, value)
++		}
++	}
++}
+diff --git a/backend/internal/server/routes/customer_service_test.go b/backend/internal/server/routes/customer_service_test.go
+new file mode 100644
+index 0000000..0f44d4e
+--- /dev/null
++++ b/backend/internal/server/routes/customer_service_test.go
+@@ -0,0 +1,134 @@
++package routes
++
++import (
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++
++	"github.com/gin-gonic/gin"
++	"github.com/stretchr/testify/require"
++)
++
++func TestCustomerServiceProxyForwardsOnlyRegisteredRoutes(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++
++	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		require.Equal(t, "shared-secret", r.Header.Get("X-API-Key"))
++		switch r.URL.Path {
++		case "/static/chat-widget.js":
++			w.Header().Set("Content-Type", "text/javascript")
++			_, _ = w.Write([]byte("window.widgetLoaded = true;"))
++		case "/api/chat/send":
++			require.Equal(t, http.MethodPost, r.Method)
++			require.Equal(t, "session_id=u_1", r.URL.RawQuery)
++			body, err := io.ReadAll(r.Body)
++			require.NoError(t, err)
++			require.JSONEq(t, `{"content":"hello"}`, string(body))
++			w.Header().Set("Content-Type", "application/json")
++			_, _ = w.Write([]byte(`{"success":true}`))
++		default:
++			http.NotFound(w, r)
++		}
++	}))
++	defer upstream.Close()
++
++	t.Setenv(customerServiceBaseURLEnv, upstream.URL)
++	t.Setenv(customerServiceAPIKeyEnv, "shared-secret")
++
++	router := gin.New()
++	RegisterCustomerServiceRoutes(router, nil)
++
++	t.Run("widget", func(t *testing.T) {
++		recorder := httptest.NewRecorder()
++		request := httptest.NewRequest(http.MethodGet, "/customer-service/chat-widget.js", nil)
++		router.ServeHTTP(recorder, request)
++
++		require.Equal(t, http.StatusOK, recorder.Code)
++		require.Equal(t, "text/javascript", recorder.Header().Get("Content-Type"))
++		require.Contains(t, recorder.Body.String(), "widgetLoaded")
++	})
++
++	t.Run("chat API", func(t *testing.T) {
++		recorder := httptest.NewRecorder()
++		request := httptest.NewRequest(
++			http.MethodPost,
++			"/customer-service/api/chat/send?session_id=u_1",
++			strings.NewReader(`{"content":"hello"}`),
++		)
++		request.Header.Set("Content-Type", "application/json")
++		router.ServeHTTP(recorder, request)
++
++		require.Equal(t, http.StatusOK, recorder.Code)
++		require.JSONEq(t, `{"success":true}`, recorder.Body.String())
++	})
++
++	t.Run("unregistered path", func(t *testing.T) {
++		recorder := httptest.NewRecorder()
++		request := httptest.NewRequest(http.MethodGet, "/customer-service/admin", nil)
++		router.ServeHTTP(recorder, request)
++
++		require.Equal(t, http.StatusNotFound, recorder.Code)
++	})
++}
++
++func TestCustomerServiceProxyFailsClosedWithoutConfiguration(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++	t.Setenv(customerServiceBaseURLEnv, "")
++	t.Setenv(customerServiceAPIKeyEnv, "")
++
++	router := gin.New()
++	RegisterCustomerServiceRoutes(router, nil)
++
++	recorder := httptest.NewRecorder()
++	request := httptest.NewRequest(http.MethodGet, "/customer-service/chat-widget.js", nil)
++	router.ServeHTTP(recorder, request)
++
++	require.Equal(t, http.StatusServiceUnavailable, recorder.Code)
++	require.NotContains(t, recorder.Body.String(), "API key")
++}
++
++func TestCustomerServiceProxyRejectsOversizedBody(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++	t.Setenv(customerServiceBaseURLEnv, "https://custom.api2cn.com")
++	t.Setenv(customerServiceAPIKeyEnv, "shared-secret")
++
++	router := gin.New()
++	RegisterCustomerServiceRoutes(router, nil)
++
++	recorder := httptest.NewRecorder()
++	request := httptest.NewRequest(
++		http.MethodPost,
++		"/customer-service/api/chat/upload",
++		strings.NewReader("x"),
++	)
++	request.ContentLength = customerServiceMaxBody + 1
++	router.ServeHTTP(recorder, request)
++
++	require.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
++}
++
++func TestParseCustomerServiceBaseURL(t *testing.T) {
++	for _, tc := range []struct {
++		name    string
++		raw     string
++		wantErr bool
++	}{
++		{name: "https", raw: "https://custom.api2cn.com"},
++		{name: "http private", raw: "http://127.0.0.1:8000"},
++		{name: "missing", wantErr: true},
++		{name: "unsupported scheme", raw: "file:///tmp/widget", wantErr: true},
++		{name: "credentials", raw: "https://user:pass@example.com", wantErr: true},
++		{name: "query", raw: "https://example.com?key=leak", wantErr: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			_, err := parseCustomerServiceBaseURL(tc.raw)
++			if tc.wantErr {
++				require.Error(t, err)
++			} else {
++				require.NoError(t, err)
++			}
++		})
++	}
++}
+diff --git a/deploy/.env.example b/deploy/.env.example
+index 6beca88..892f2c8 100644
+--- a/deploy/.env.example
++++ b/deploy/.env.example
+@@ -30,6 +30,15 @@ UPDATE_GITHUB_TOKEN=
+ # Return Server-Timing for authenticated requests made by the Admin web UI
+ ENABLE_SERVER_TIMING=false
+ 
++# Customer-service proxy. The API key must match CHAT_API_KEY on the
++# Customer-service-bot server and is never exposed to browsers.
++CUSTOMER_SERVICE_BASE_URL=https://custom.api2cn.com
++CUSTOMER_SERVICE_API_KEY=
++
++# Docker image used by Compose. Set this to your locally built image after
++# applying the customer-service integration patch.
++SUB2API_IMAGE=weishaw/sub2api:latest
++
+ # Apple container image overrides (ignored by Docker Compose). Pin release tags
+ # or digests for repeatable operator-managed deployments.
+ APPLE_CONTAINER_SUB2API_IMAGE=weishaw/sub2api:latest
+diff --git a/deploy/docker-compose.local.yml b/deploy/docker-compose.local.yml
+index 588862e..5bbda91 100644
+--- a/deploy/docker-compose.local.yml
++++ b/deploy/docker-compose.local.yml
+@@ -24,7 +24,7 @@ services:
+   # Sub2API Application
+   # ===========================================================================
+   sub2api:
+-    image: weishaw/sub2api:latest
++    image: ${SUB2API_IMAGE:-weishaw/sub2api:latest}
+     container_name: sub2api
+     restart: unless-stopped
+     security_opt:
+@@ -54,6 +54,8 @@ services:
+       - SERVER_PORT=8080
+       - SERVER_MODE=${SERVER_MODE:-release}
+       - ENABLE_SERVER_TIMING=${ENABLE_SERVER_TIMING:-false}
++      - CUSTOMER_SERVICE_BASE_URL=${CUSTOMER_SERVICE_BASE_URL:-}
++      - CUSTOMER_SERVICE_API_KEY=${CUSTOMER_SERVICE_API_KEY:-}
+       - RUN_MODE=${RUN_MODE:-standard}
+       - UPDATE_GITHUB_TOKEN=${UPDATE_GITHUB_TOKEN:-}
+ 
+diff --git a/deploy/docker-compose.standalone.yml b/deploy/docker-compose.standalone.yml
+index cd0a008..50f6a69 100644
+--- a/deploy/docker-compose.standalone.yml
++++ b/deploy/docker-compose.standalone.yml
+@@ -12,7 +12,7 @@
+ 
+ services:
+   sub2api:
+-    image: weishaw/sub2api:latest
++    image: ${SUB2API_IMAGE:-weishaw/sub2api:latest}
+     container_name: sub2api
+     restart: unless-stopped
+     security_opt:
+@@ -40,6 +40,8 @@ services:
+       - SERVER_PORT=8080
+       - SERVER_MODE=${SERVER_MODE:-release}
+       - ENABLE_SERVER_TIMING=${ENABLE_SERVER_TIMING:-false}
++      - CUSTOMER_SERVICE_BASE_URL=${CUSTOMER_SERVICE_BASE_URL:-}
++      - CUSTOMER_SERVICE_API_KEY=${CUSTOMER_SERVICE_API_KEY:-}
+       - RUN_MODE=${RUN_MODE:-standard}
+       - UPDATE_GITHUB_TOKEN=${UPDATE_GITHUB_TOKEN:-}
+ 
+diff --git a/deploy/docker-compose.yml b/deploy/docker-compose.yml
+index 68a51e7..4e13ccd 100644
+--- a/deploy/docker-compose.yml
++++ b/deploy/docker-compose.yml
+@@ -16,7 +16,7 @@ services:
+   # Sub2API Application
+   # ===========================================================================
+   sub2api:
+-    image: weishaw/sub2api:latest
++    image: ${SUB2API_IMAGE:-weishaw/sub2api:latest}
+     container_name: sub2api
+     restart: unless-stopped
+     security_opt:
+@@ -50,6 +50,8 @@ services:
+       - SERVER_PORT=8080
+       - SERVER_MODE=${SERVER_MODE:-release}
+       - ENABLE_SERVER_TIMING=${ENABLE_SERVER_TIMING:-false}
++      - CUSTOMER_SERVICE_BASE_URL=${CUSTOMER_SERVICE_BASE_URL:-}
++      - CUSTOMER_SERVICE_API_KEY=${CUSTOMER_SERVICE_API_KEY:-}
+       - RUN_MODE=${RUN_MODE:-standard}
+       - UPDATE_GITHUB_TOKEN=${UPDATE_GITHUB_TOKEN:-}
+       - ALIPAY_MOBILE_PRECREATE_DEEP_LINK=${ALIPAY_MOBILE_PRECREATE_DEEP_LINK:-}
+diff --git a/frontend/index.html b/frontend/index.html
+index 245db62..35543a2 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -9,5 +9,6 @@
+   <body>
+     <div id="app"></div>
+     <script type="module" src="/src/main.ts"></script>
++    <script src="/customer-service/chat-widget.js" data-api-base="/customer-service" defer></script>
+   </body>
+ </html>
