@@ -33,9 +33,12 @@ TG_ADMIN_ID = "你的_ID"
 
 ### 4. 运行示例
 ```bash
-python example_main.py
+python main.py
 ```
 打开浏览器访问 http://127.0.0.1:8000 即可看到效果。
+
+ARM64 服务器、Python 虚拟环境、systemd、Nginx 和 HTTPS 的完整部署步骤见：
+[ARM64 服务器部署指南](docs/ARM64_DEPLOYMENT.md)。
 
 🧩 如何集成到你的项目中
 复制文件：将 chat_router.py 和 templates/chat_widget.html 复制到你的项目。
