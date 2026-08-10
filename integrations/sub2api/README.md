@@ -135,7 +135,7 @@ chat-widget.js 或浏览器请求中。
 补丁已经在 frontend/index.html 中加入：
 
     <script
-      src="/customer-service/chat-widget.js"
+      src="/customer-service/chat-widget.js?v=20260811-1"
       data-api-base="/customer-service"
       defer>
     </script>
@@ -144,7 +144,12 @@ chat-widget.js 或浏览器请求中。
 
     curl -I https://api.api2cn.com/customer-service/chat-widget.js
 
-应返回 200。浏览器 Network 中的请求应为：
+应返回 200。带版本号的挂件由 Sub2API 返回一年期不可变缓存：
+
+    Cache-Control: public, max-age=31536000, immutable
+
+更新挂件内容时必须同步修改 frontend/index.html 中的 v 参数，否则浏览器会继续
+使用当前版本。浏览器 Network 中的请求应为：
 
     /customer-service/chat-widget.js
     /customer-service/api/chat/login

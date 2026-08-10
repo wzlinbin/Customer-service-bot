@@ -61,6 +61,7 @@ async def require_chat_api_key(request: Request, call_next):
             return JSONResponse(
                 status_code=503,
                 content={"detail": "Service unavailable"},
+                headers={"Cache-Control": "no-store"},
             )
 
         supplied_key = request.headers.get("X-API-Key", "")
@@ -68,9 +69,15 @@ async def require_chat_api_key(request: Request, call_next):
             return JSONResponse(
                 status_code=401,
                 content={"detail": "Unauthorized"},
+                headers={"Cache-Control": "no-store"},
             )
 
-    return await call_next(request)
+    response = await call_next(request)
+    if is_widget_asset:
+        response.headers["Cache-Control"] = (
+            "private, max-age=300, must-revalidate"
+        )
+    return response
 
 
 app.include_router(chat_router)  # 挂载路由

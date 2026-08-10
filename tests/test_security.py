@@ -50,6 +50,10 @@ class SecurityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("api2cn-chat-widget", response.text)
+        self.assertEqual(
+            response.headers.get("cache-control"),
+            "private, max-age=300, must-revalidate",
+        )
 
     async def test_cors_allows_production_and_local_origins_only(self):
         cases = {
