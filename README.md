@@ -26,16 +26,33 @@ cd Customer-service-bot
 pip install -r requirements.txt
 ```
 ### 3. 配置机器人
-打开 chat_router.py修改
-TG_BOT_TOKEN = "你的_TOKEN"
-TG_ADMIN_ID = "你的_ID"
-这两段
+配置文件固定放在项目根目录：
+
+```bash
+cp customer-service-bot.env.example customer-service-bot.env
+```
+
+编辑 `customer-service-bot.env`，至少填写：
+
+```env
+TG_BOT_TOKEN=你的_TOKEN
+TG_ADMIN_ID=你的_ID
+CHAT_API_KEY=你生成的共享密钥
+```
+
+程序会自动读取该文件。操作系统或 systemd 中已经存在的同名环境变量优先级更高。
+真实配置文件已被 `.gitignore` 排除，请勿提交到 Git。
+
+其他可配置项包括监听地址和端口、数据库路径、CORS、消息和上传限制、Telegram
+轮询参数，以及临时聊天数据的保留与清理周期。完整配置见
+`customer-service-bot.env.example`。
 
 ### 4. 运行示例
 ```bash
 python main.py
 ```
-打开浏览器访问 http://127.0.0.1:8000 即可看到效果。
+根路径已因安全原因关闭。挂件和聊天 API 必须通过携带共享密钥的 Sub2API
+服务端代理访问。
 
 ARM64 服务器使用 root、Python 虚拟环境和 systemd 持续运行的部署步骤见：
 [ARM64 服务器部署指南](docs/ARM64_DEPLOYMENT.md)。

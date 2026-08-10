@@ -1,5 +1,4 @@
 import asyncio
-import os
 import secrets
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -10,35 +9,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-# 引入我们写好的插件
-from chat_router import router as chat_router, telegram_polling_loop
+from chat_router import (
+    cleanup_expired_data_loop,
+    router as chat_router,
+    telegram_polling_loop,
+)
+from settings import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     polling_task = asyncio.create_task(telegram_polling_loop())
+    cleanup_task = asyncio.create_task(cleanup_expired_data_loop())
     try:
         yield
     finally:
-        polling_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await polling_task
+        for task in (polling_task, cleanup_task):
+            task.cancel()
+        for task in (polling_task, cleanup_task):
+            with suppress(asyncio.CancelledError):
+                await task
 
 
 base_dir = Path(__file__).parent
-chat_api_key = os.getenv("CHAT_API_KEY", "").strip()
-allowed_origins = [
-    origin.strip()
-    for origin in os.getenv(
-        "CHAT_ALLOWED_ORIGINS",
-        "https://api.api2cn.com",
-    ).split(",")
-    if origin.strip()
-]
-allowed_origin_regex = os.getenv(
-    "CHAT_ALLOWED_ORIGIN_REGEX",
-    r"(?i)^https?://(?:127\.0\.0\.1|localhost)(?::\d+)?$",
-)
+chat_api_key = settings.chat_api_key
 
 app = FastAPI(
     lifespan=lifespan,
@@ -48,8 +42,8 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_origin_regex=allowed_origin_regex,
+    allow_origins=list(settings.allowed_origins),
+    allow_origin_regex=settings.allowed_origin_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "X-API-Key"],
@@ -83,5 +77,5 @@ app.include_router(chat_router)  # 挂载路由
 app.mount("/static", StaticFiles(directory=base_dir / "static"), name="static")
 
 if __name__ == "__main__":
-    print("客服服务监听: http://127.0.0.1:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print(f"客服服务监听: http://{settings.app_host}:{settings.app_port}")
+    uvicorn.run(app, host=settings.app_host, port=settings.app_port)

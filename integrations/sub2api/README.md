@@ -22,9 +22,11 @@ chat-widget.js 或浏览器请求中。
 
 ## 2. 配置客服服务
 
-创建环境文件：
+进入客服项目并从示例创建环境文件：
 
-    nano /etc/customer-service-bot.env
+    cd ~/Customer-service-bot
+    cp -n customer-service-bot.env.example customer-service-bot.env
+    nano ~/Customer-service-bot/customer-service-bot.env
 
 写入：
 
@@ -33,12 +35,12 @@ chat-widget.js 或浏览器请求中。
 
 限制权限：
 
-    chown root:root /etc/customer-service-bot.env
-    chmod 600 /etc/customer-service-bot.env
+    chown root:root ~/Customer-service-bot/customer-service-bot.env
+    chmod 600 ~/Customer-service-bot/customer-service-bot.env
 
 在 /etc/systemd/system/customer-service-bot.service 的 Service 区域加入：
 
-    EnvironmentFile=/etc/customer-service-bot.env
+    EnvironmentFile=/root/Customer-service-bot/customer-service-bot.env
 
 重新加载：
 
@@ -55,7 +57,7 @@ chat-widget.js 或浏览器请求中。
 带密钥的服务器端验证：
 
     set -a
-    source /etc/customer-service-bot.env
+    source ~/Customer-service-bot/customer-service-bot.env
     set +a
     curl -I \
       -H "X-API-Key: $CHAT_API_KEY" \
@@ -160,4 +162,3 @@ chat-widget.js 或浏览器请求中。
 - 固定密钥只验证请求来自 Sub2API 服务端，不区分最终访客。
 - Sub2API 的客服代理仍是面向网站访客的公开入口，应保留限流。
 - 如需进一步防自动化滥用，应增加 Turnstile 或要求 Sub2API 登录态。
-

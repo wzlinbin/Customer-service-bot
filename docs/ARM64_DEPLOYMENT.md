@@ -84,71 +84,62 @@ whoami 应显示 root，ARM64 通常显示 aarch64 或 arm64。
 检查关键依赖：
 
     ~/Customer-service-bot/.venv/bin/python \
-      -c "import fastapi, uvicorn, httpx, jinja2; print('dependencies OK')"
+      -c "import dotenv, fastapi, httpx, jinja2, uvicorn; print('dependencies OK')"
 
 不要把 .venv、chat.db 或 __pycache__ 提交到 Git 仓库。
 
-## 5. 配置 Telegram
+## 5. 创建项目配置文件
 
-当前版本从 chat_router.py 顶部读取：
+配置文件直接位于项目目录。先从示例复制：
 
-    TG_BOT_TOKEN = "你的 Bot Token"
-    TG_ADMIN_ID = "你的 Telegram ID"
+    cd ~/Customer-service-bot
+    cp -n customer-service-bot.env.example customer-service-bot.env
 
 编辑配置：
 
-    nano ~/Customer-service-bot/chat_router.py
+    nano ~/Customer-service-bot/customer-service-bot.env
+
+至少填写 Telegram Bot Token、管理员 ID 和双方共享密钥：
+
+    TG_BOT_TOKEN=你的 Bot Token
+    TG_ADMIN_ID=你的 Telegram ID
+    CHAT_API_KEY=替换为生成的共享密钥
+    CHAT_ALLOWED_ORIGINS=https://api.api2cn.com
+
+共享密钥可使用以下命令生成：
+
+    openssl rand -hex 32
 
 限制配置文件权限：
 
-    chown root:root ~/Customer-service-bot/chat_router.py
-    chmod 600 ~/Customer-service-bot/chat_router.py
+    chown root:root ~/Customer-service-bot/customer-service-bot.env
+    chmod 600 ~/Customer-service-bot/customer-service-bot.env
 
 安全注意事项：
 
 - 不要把真实 Token 提交或推送到 GitHub。
 - 不要在工单、截图或日志中展示 Token。
 - Token 如果曾公开，应立即通过 BotFather 重置。
-- 更新代码前先备份 chat_router.py 中的本地配置。
-
-### 配置服务端共享密钥
-
-生成独立的 256 位随机密钥：
-
-    openssl rand -hex 32
-
-创建环境文件：
-
-    nano /etc/customer-service-bot.env
-
-写入生成的值：
-
-    CHAT_API_KEY=替换为生成的共享密钥
-    CHAT_ALLOWED_ORIGINS=https://api.api2cn.com
-
-限制权限：
-
-    chown root:root /etc/customer-service-bot.env
-    chmod 600 /etc/customer-service-bot.env
+- 更新代码前先备份 customer-service-bot.env。
 
 该密钥必须与 Sub2API 的 CUSTOMER_SERVICE_API_KEY 相同。不能把它写入网页、
 chat-widget.js 或 Git 仓库。
 
+配置文件还包含数据库路径、监听地址、输入限制、Telegram 轮询参数和自动清理
+周期。默认保留最近 24 小时的会话与消息，每小时清理一次；可通过
+CHAT_DATA_RETENTION_HOURS 和 CHAT_CLEANUP_INTERVAL_SECONDS 调整。
+
 ## 6. 前台测试
 
-使用虚拟环境中的 Uvicorn 启动：
+使用虚拟环境启动：
 
     cd ~/Customer-service-bot
-    ./.venv/bin/python \
-      -m uvicorn main:app \
-      --host 127.0.0.1 \
-      --port 8000 \
-      --workers 1
+    ./.venv/bin/python main.py
 
 另开一个 SSH 终端，加载密钥并检查：
 
     set -a
-    source /etc/customer-service-bot.env
+    source ~/Customer-service-bot/customer-service-bot.env
     set +a
 
     curl -i http://127.0.0.1:8000/
@@ -160,7 +151,7 @@ chat-widget.js 或 Git 仓库。
 根路径应返回 404；不带密钥的挂件请求应返回 401；带正确密钥时应返回 200。
 测试完成后在启动终端按 Ctrl+C。
 
-必须保持 workers 为 1。多个 worker 会同时运行 Telegram getUpdates 长轮询，
+main.py 使用单 worker 运行。不要改成多个 worker，否则会同时运行 Telegram getUpdates 长轮询，
 导致回复争抢、重复监听或 Telegram 冲突；SQLite 也不适合当前模式下的多进程写入。
 
 ## 7. 使用 systemd 持续后台运行
@@ -184,9 +175,9 @@ systemd 不会展开波浪号，因此服务文件中的项目路径必须写成
     User=root
     Group=root
     WorkingDirectory=/root/Customer-service-bot
-    EnvironmentFile=/etc/customer-service-bot.env
+    EnvironmentFile=/root/Customer-service-bot/customer-service-bot.env
     Environment=PYTHONUNBUFFERED=1
-    ExecStart=/root/Customer-service-bot/.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+    ExecStart=/root/Customer-service-bot/.venv/bin/python /root/Customer-service-bot/main.py
     Restart=always
     RestartSec=5
     TimeoutStopSec=30
@@ -248,11 +239,11 @@ systemd 会在应用异常退出后等待 5 秒自动重启，也会在服务器
 
     Access-Control-Allow-Origin: https://api.api2cn.com
 
-如需覆盖默认正则，可在 systemd 的 Service 区域增加：
+如需覆盖默认正则，编辑项目目录中的 customer-service-bot.env：
 
-    Environment=CHAT_ALLOWED_ORIGIN_REGEX=你的完整正则
+    CHAT_ALLOWED_ORIGIN_REGEX=你的完整正则
 
-修改服务文件后执行：
+修改配置后执行：
 
     systemctl daemon-reload
     systemctl restart customer-service-bot
@@ -278,15 +269,15 @@ systemd 会在应用异常退出后等待 5 秒自动重启，也会在服务器
     install -d -m 700 /var/backups/customer-service-bot
     cp ~/Customer-service-bot/chat.db \
       /var/backups/customer-service-bot/chat.db.backup
-    cp ~/Customer-service-bot/chat_router.py \
-      /var/backups/customer-service-bot/chat_router.py.backup
+    cp ~/Customer-service-bot/customer-service-bot.env \
+      /var/backups/customer-service-bot/customer-service-bot.env.backup
 
 拉取代码：
 
     git -C ~/Customer-service-bot pull --ff-only
 
-如果 chat_router.py 的本地 Token 配置与远程更新冲突，不要强制覆盖；
-先解决配置差异并确认 Token 仍然正确。
+customer-service-bot.env 已被 Git 忽略，拉取代码不会覆盖其中的本地密钥。
+如果示例新增了配置项，将其按需补充到实际配置文件。
 
 更新依赖并重启：
 
@@ -302,8 +293,8 @@ chat.db 位于：
     ~/Customer-service-bot/chat.db
 
 它保存昵称、会话 ID 和聊天文字。用户图片不会保存为本地文件，但会发送到
-Telegram。当前版本不会自动清理 chat.db，长期运行时应定期备份、归档或增加
-按时间清理功能。
+Telegram。程序默认每小时清理一次超过 24 小时的会话和消息，保留时间和清理
+周期由 customer-service-bot.env 控制。
 
 不要在应用运行时直接删除 chat.db。需要恢复备份时，先停止服务：
 
@@ -322,7 +313,7 @@ Telegram。当前版本不会自动清理 chat.db，长期运行时应定期备�
 
     systemctl status customer-service-bot --no-pager
     set -a
-    source /etc/customer-service-bot.env
+    source ~/Customer-service-bot/customer-service-bot.env
     set +a
     curl -I \
       -H "X-API-Key: $CHAT_API_KEY" \

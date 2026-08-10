@@ -1,0 +1,5 @@
+customer-service-bot.env
+.venv/
+__pycache__/
+*.py[cod]
+chat.db
