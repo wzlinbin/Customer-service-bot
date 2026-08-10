@@ -56,4 +56,33 @@ async def startup_event():
 ```
 ![截图](https://github.com/user-attachments/assets/96b579a6-6117-4584-9ebb-dec93e1ccafa)
 
+## 跨域嵌入
+
+将本项目部署在 https://custom.api2cn.com 后，在
+https://api.api2cn.com 的页面底部加入：
+
+    <script
+      src="https://custom.api2cn.com/static/chat-widget.js"
+      data-api-base="https://custom.api2cn.com"
+      defer>
+    </script>
+
+挂件使用 Shadow DOM 和自带样式，不需要目标网页加载 Tailwind CSS。
+
+默认允许所有 api2cn.com 子域，以及本机测试地址跨域访问聊天接口：
+
+    http://*.api2cn.com
+    https://*.api2cn.com
+    http://127.0.0.1:任意端口
+    https://127.0.0.1:任意端口
+    http://localhost:任意端口
+    https://localhost:任意端口
+
+可以通过 CHAT_ALLOWED_ORIGIN_REGEX 环境变量覆盖默认正则，也可以通过
+CHAT_ALLOWED_ORIGINS 添加其他精确来源，多个来源使用英文逗号分隔。
+
+如果目标网站设置了 Content-Security-Policy，还需要将
+https://custom.api2cn.com 加入 script-src 和 connect-src，并允许
+style-src 使用 'unsafe-inline' 以加载挂件内置样式。
+
 

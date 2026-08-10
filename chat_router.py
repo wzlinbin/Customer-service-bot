@@ -6,8 +6,8 @@ from fastapi import APIRouter, Request, UploadFile, File, Form
 
 # ================= 配置区域 =================
 # 建议从环境变量或配置文件读取，不要直接提交到 GitHub
-TG_BOT_TOKEN = "你的_BOT_TOKEN_填在这里"  
-TG_ADMIN_ID = "你的_TG_ID_填在这里"       
+TG_BOT_TOKEN = "8751891430:AAGKEhWXSiP1ZkXX-PJpfzi5QM46Sb_OOb0"  
+TG_ADMIN_ID = "7740563017"       
 # ===========================================
 
 router = APIRouter()
