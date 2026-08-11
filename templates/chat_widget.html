@@ -4,43 +4,114 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
         </svg>
-        <span class="font-bold text-sm tracking-wide">在线客服</span>
+        <span class="font-bold text-sm tracking-wide" data-chat-i18n="launcher">在线客服</span>
     </div>
 </div>
 
 <div id="chat-box" class="fixed bottom-24 right-6 w-80 h-[450px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col hidden z-50 overflow-hidden transform transition-all origin-bottom-right">
     <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-4 flex justify-between items-center shadow-sm">
         <div class="flex flex-col">
-            <span class="font-bold text-sm flex items-center gap-1">💬 客服支持<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span></span>
-            <span class="text-[10px] opacity-80" id="chat-status">未连接</span>
+            <span class="font-bold text-sm flex items-center gap-1">💬 <span data-chat-i18n="supportTitle">客服支持</span><span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span></span>
+            <span class="text-[10px] opacity-80" id="chat-status" data-chat-i18n="disconnected">未连接</span>
         </div>
-        <button onclick="toggleChat()" class="text-white/80 hover:text-white transition">✕</button>
+        <button onclick="toggleChat()" class="text-white/80 hover:text-white transition" data-chat-i18n-aria="closeWindow" aria-label="关闭客服窗口">✕</button>
     </div>
 
     <form id="login-view" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50/50" onsubmit="event.preventDefault(); loginChat()">
         <div class="bg-white p-4 rounded-full shadow-sm mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <p class="text-sm font-bold text-gray-700 mb-1">欢迎咨询</p>
-        <p class="text-xs text-gray-400 mb-4 text-center">请设置一个称呼方便我们称呼您</p>
-        <input type="text" id="nickname-input" placeholder="例如: 张老板" class="w-full border border-gray-200 p-2.5 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition">
-        <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/20">开始对话</button>
+        <p class="text-sm font-bold text-gray-700 mb-1" data-chat-i18n="welcome">欢迎咨询</p>
+        <p class="text-xs text-gray-400 mb-4 text-center" data-chat-i18n="nicknamePrompt">请设置一个称呼方便我们称呼您</p>
+        <input type="text" id="nickname-input" data-chat-i18n-placeholder="nicknamePlaceholder" data-chat-i18n-aria="nicknameLabel" placeholder="您的称呼" aria-label="您的称呼" class="w-full border border-gray-200 p-2.5 rounded-lg mb-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition">
+        <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/20" data-chat-i18n="start">开始对话</button>
     </form>
 
     <div id="msg-view" class="flex-1 flex flex-col hidden bg-gray-50">
         <div id="msg-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
         <div class="p-3 bg-white border-t border-gray-100 flex gap-2 items-center">
-            <label class="cursor-pointer text-gray-400 hover:text-blue-600 transition p-1">
+            <label class="cursor-pointer text-gray-400 hover:text-blue-600 transition p-1" data-chat-i18n-title="sendImage" data-chat-i18n-aria="sendImage" title="发送图片" aria-label="发送图片">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 <input type="file" id="img-upload" class="hidden" accept="image/*" onchange="uploadImage()">
             </label>
-            <input type="text" id="msg-input" class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500 placeholder-gray-400" placeholder="输入消息..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" class="text-blue-600 hover:text-blue-700 p-1 font-bold text-sm">发送</button>
+            <input type="text" id="msg-input" class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500 placeholder-gray-400" data-chat-i18n-placeholder="messagePlaceholder" data-chat-i18n-aria="messageLabel" placeholder="输入消息..." aria-label="输入消息" onkeypress="if(event.key==='Enter') sendMsg()">
+            <button onclick="sendMsg()" class="text-blue-600 hover:text-blue-700 p-1 font-bold text-sm" data-chat-i18n="send">发送</button>
         </div>
     </div>
 </div>
 
 <script>
+    const chatTranslations = {
+        en: {
+            launcher: 'Online support', supportTitle: 'Customer support', disconnected: 'Not connected', closeWindow: 'Close support window',
+            welcome: 'Welcome', nicknamePrompt: 'What should we call you?', nicknamePlaceholder: 'Your name', nicknameLabel: 'Your name',
+            start: 'Start chat', sendImage: 'Send image', messagePlaceholder: 'Type a message...', messageLabel: 'Message', send: 'Send',
+            conversationGreeting: 'Welcome to online customer support. Please enter your question or request, and a support agent will reply shortly. Please keep this window open during the conversation.',
+            emptyNickname: 'Please enter your name first', uploadSending: 'Sending image...', uploadSent: 'Image sent', uploadFailed: 'Image failed to send'
+        },
+        de: {
+            launcher: 'Online-Support', supportTitle: 'Kundenservice', disconnected: 'Nicht verbunden', closeWindow: 'Supportfenster schließen',
+            welcome: 'Willkommen', nicknamePrompt: 'Wie dürfen wir Sie ansprechen?', nicknamePlaceholder: 'Ihr Name', nicknameLabel: 'Ihr Name',
+            start: 'Chat starten', sendImage: 'Bild senden', messagePlaceholder: 'Nachricht eingeben...', messageLabel: 'Nachricht', send: 'Senden',
+            conversationGreeting: 'Willkommen beim Online-Kundenservice. Bitte geben Sie Ihre Frage oder Ihr Anliegen ein. Unser Kundenservice antwortet Ihnen in Kürze. Bitte schließen Sie dieses Fenster während des Gesprächs nicht.',
+            emptyNickname: 'Bitte geben Sie zuerst Ihren Namen ein', uploadSending: 'Bild wird gesendet...', uploadSent: 'Bild gesendet', uploadFailed: 'Bild konnte nicht gesendet werden'
+        },
+        es: {
+            launcher: 'Soporte en línea', supportTitle: 'Atención al cliente', disconnected: 'Sin conexión', closeWindow: 'Cerrar ventana de soporte',
+            welcome: 'Bienvenido', nicknamePrompt: '¿Cómo podemos llamarte?', nicknamePlaceholder: 'Tu nombre', nicknameLabel: 'Tu nombre',
+            start: 'Iniciar chat', sendImage: 'Enviar imagen', messagePlaceholder: 'Escribe un mensaje...', messageLabel: 'Mensaje', send: 'Enviar',
+            conversationGreeting: 'Te damos la bienvenida al servicio de atención al cliente en línea. Escribe tu pregunta o solicitud; un agente te responderá en breve. No cierres esta ventana durante la conversación.',
+            emptyNickname: 'Introduce tu nombre primero', uploadSending: 'Enviando imagen...', uploadSent: 'Imagen enviada', uploadFailed: 'No se pudo enviar la imagen'
+        },
+        ja: {
+            launcher: 'オンラインサポート', supportTitle: 'カスタマーサポート', disconnected: '未接続', closeWindow: 'サポート画面を閉じる',
+            welcome: 'お問い合わせありがとうございます', nicknamePrompt: 'お呼びするお名前を入力してください', nicknamePlaceholder: 'お名前', nicknameLabel: 'お名前',
+            start: 'チャットを開始', sendImage: '画像を送信', messagePlaceholder: 'メッセージを入力...', messageLabel: 'メッセージ', send: '送信',
+            conversationGreeting: 'オンラインカスタマーサポートへようこそ。ご質問やご要望を入力してください。後ほど担当者が回答します。会話中はこのウィンドウを閉じないでください。',
+            emptyNickname: 'お名前を入力してください', uploadSending: '画像を送信しています...', uploadSent: '画像を送信しました', uploadFailed: '画像を送信できませんでした'
+        },
+        'zh-CN': {
+            launcher: '在线客服', supportTitle: '客服支持', disconnected: '未连接', closeWindow: '关闭客服窗口',
+            welcome: '欢迎咨询', nicknamePrompt: '请设置一个称呼方便我们称呼您', nicknamePlaceholder: '您的称呼', nicknameLabel: '您的称呼',
+            start: '开始对话', sendImage: '发送图片', messagePlaceholder: '输入消息...', messageLabel: '输入消息', send: '发送',
+            conversationGreeting: '欢迎使用在线客服系统，请输入您的问题或请求，稍后客服会进行答复，对话期间请勿关闭窗口。',
+            emptyNickname: '请先输入称呼', uploadSending: '正在发送图片...', uploadSent: '图片已发送', uploadFailed: '图片发送失败'
+        },
+        'zh-TW': {
+            launcher: '線上客服', supportTitle: '客服支援', disconnected: '未連線', closeWindow: '關閉客服視窗',
+            welcome: '歡迎諮詢', nicknamePrompt: '請設定稱呼，方便我們稱呼您', nicknamePlaceholder: '您的稱呼', nicknameLabel: '您的稱呼',
+            start: '開始對話', sendImage: '傳送圖片', messagePlaceholder: '輸入訊息...', messageLabel: '輸入訊息', send: '傳送',
+            conversationGreeting: '歡迎使用線上客服系統，請輸入您的問題或請求，稍後客服會進行答覆，對話期間請勿關閉視窗。',
+            emptyNickname: '請先輸入稱呼', uploadSending: '正在傳送圖片...', uploadSent: '圖片已傳送', uploadFailed: '圖片傳送失敗'
+        }
+    };
+
+    function resolveChatLocale(preferredLanguages, browserLanguage) {
+        const candidates = Array.isArray(preferredLanguages) ? preferredLanguages : (browserLanguage ? [browserLanguage] : []);
+        for (const candidate of candidates) {
+            const language = String(candidate || '').replace(/_/g, '-').toLowerCase();
+            if (language === 'zh' || language.startsWith('zh-')) {
+                return /(^|-)(hant|cht|tw|hk|mo)(-|$)/.test(language) ? 'zh-TW' : 'zh-CN';
+            }
+            const baseLanguage = language.split('-')[0];
+            if (chatTranslations[baseLanguage]) return baseLanguage;
+        }
+        return 'zh-CN';
+    }
+
+    const chatLocale = resolveChatLocale(navigator.languages, navigator.language);
+    const chatText = key => chatTranslations[chatLocale][key] || chatTranslations['zh-CN'][key] || key;
+    document.getElementById('chat-box').setAttribute('lang', chatLocale);
+    document.querySelectorAll('[data-chat-i18n]').forEach(element => {
+        element.textContent = chatText(element.dataset.chatI18n);
+    });
+    ['title', 'aria', 'placeholder'].forEach(attribute => {
+        document.querySelectorAll(`[data-chat-i18n-${attribute}]`).forEach(element => {
+            const targetAttribute = attribute === 'aria' ? 'aria-label' : attribute;
+            element.setAttribute(targetAttribute, chatText(element.getAttribute(`data-chat-i18n-${attribute}`)));
+        });
+    });
+
     localStorage.removeItem('chat_sid');
     localStorage.removeItem('chat_nickname');
     let sessionId = sessionStorage.getItem('chat_sid');
@@ -48,6 +119,7 @@
     let nickname = sessionStorage.getItem('chat_nickname');
     let knownMsgIds = new Set();
     let pollTimer = null;
+    let greetingShown = false;
 
     function toggleChat() {
         const box = document.getElementById('chat-box');
@@ -57,7 +129,7 @@
 
     async function loginChat() {
         const name = document.getElementById('nickname-input').value.trim();
-        if (!name) return alert("请先输入称呼");
+        if (!name) return alert(chatText('emptyNickname'));
         await fetch('/api/chat/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, nickname: name }) });
         sessionStorage.setItem('chat_nickname', name);
         nickname = name;
@@ -68,6 +140,10 @@
         document.getElementById('login-view').classList.add('hidden');
         document.getElementById('msg-view').classList.remove('hidden');
         document.getElementById('chat-status').innerText = `${nickname}`;
+        if (!greetingShown) {
+            addBubble(chatText('conversationGreeting'), 'other');
+            greetingShown = true;
+        }
         if (!pollTimer) { pollTimer = setInterval(pollMessages, 2000); pollMessages(); }
     }
 
@@ -84,15 +160,15 @@
         const file = document.getElementById('img-upload').files[0];
         if (!file) return;
         const tempId = 'temp-' + Date.now();
-        addBubble("⏳ 正在发送图片...", "self", true, tempId);
+        addBubble("⏳ " + chatText('uploadSending'), "self", true, tempId);
         const formData = new FormData();
         formData.append('session_id', sessionId);
         formData.append('file', file);
         try {
             await fetch('/api/chat/upload', { method: 'POST', body: formData });
             document.getElementById(tempId)?.remove();
-            addBubble("✅ 图片已发送", "self");
-        } catch(e) { document.getElementById(tempId).innerText = "❌ 图片发送失败"; }
+            addBubble("✅ " + chatText('uploadSent'), "self");
+        } catch(e) { document.getElementById(tempId).innerText = "❌ " + chatText('uploadFailed'); }
         document.getElementById('img-upload').value = '';
     }
 
