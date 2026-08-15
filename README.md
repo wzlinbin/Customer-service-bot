@@ -49,48 +49,40 @@ CHAT_API_KEY=你生成的共享密钥
 轮询参数，以及临时聊天数据的保留与清理周期。完整配置见
 `customer-service-bot.env.example`。
 
+
+
+# 安装服务
+nano /etc/systemd/system/customer-service-bot.service
+
+    [Unit]
+    Description=Customer Service Bot
+    Wants=network-online.target
+    After=network-online.target
+
+    [Service]
+    Type=simple
+    User=root
+    Group=root
+    WorkingDirectory=/root/Customer-service-bot
+    EnvironmentFile=/root/Customer-service-bot/customer-service-bot.env
+    Environment=PYTHONUNBUFFERED=1
+    ExecStart=/root/Customer-service-bot/.venv/bin/python /root/Customer-service-bot/main.py
+    Restart=always
+    RestartSec=5
+    TimeoutStopSec=30
+    KillSignal=SIGINT
+    UMask=0077
+
+    NoNewPrivileges=true
+    PrivateTmp=true
+    ProtectSystem=full
+    ReadWritePaths=/root/Customer-service-bot
+
+    [Install]
+    WantedBy=multi-user.target
+
+
 ### 4. 运行示例
-```bash
-python main.py
-```
-根路径已因安全原因关闭。挂件和聊天 API 必须通过携带共享密钥的 Sub2API
-服务端代理访问。
 
-ARM64 服务器使用 root、Python 虚拟环境和 systemd 持续运行的部署步骤见：
-[ARM64 服务器部署指南](docs/ARM64_DEPLOYMENT.md)。
-
-🧩 如何集成到你的项目中
-复制文件：将 chat_router.py 和 templates/chat_widget.html 复制到你的项目。
-挂载路由 (main.py)：
-```bash
-from chat_router import router as chat_router, telegram_polling_loop
-
-app.include_router(chat_router)
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(telegram_polling_loop())
-```
-
-引入前端： 在你的 HTML 模板底部加入
-```bash
-{% include 'chat_widget.html' %}
-```
-![截图](https://github.com/user-attachments/assets/96b579a6-6117-4584-9ebb-dec93e1ccafa)
-
-## Sub2API 安全集成
-
-生产环境使用服务端代理：
-
-    浏览器
-      -> api.api2cn.com/customer-service/*
-        -> Sub2API 服务端添加 X-API-Key
-          -> custom.api2cn.com
-
-固定密钥不会写入网页或 chat-widget.js。客服服务端会关闭根页面、API 文档，
-并要求所有静态挂件和聊天 API 请求携带正确的 X-API-Key。
-
-Sub2API 补丁、双方环境变量、自定义镜像构建和验证步骤见：
-[Sub2API 安全集成指南](integrations/sub2api/README.md)。
-
-
+sudo systemctl enable customer-service-bot
+sudo systemctl start customer-service-bot
