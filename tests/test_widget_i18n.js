@@ -54,7 +54,7 @@ const i18n = createI18n({
     navigator: { languages: ["en-US"], language: "en-US" }
 });
 const expectedChineseGreeting =
-    "欢迎使用在线客服系统，请输入您的问题或请求，稍后客服会进行答复，对话期间请勿关闭窗口。";
+    "欢迎使用在线客服系统，请输入您的问题或请求，稍后客服会进行答复，对话期间请勿关闭窗口。\n\n正常响应时间：工作日 09:00-21:00。";
 assert.equal(
     i18n.translations["zh-CN"].conversationGreeting,
     expectedChineseGreeting

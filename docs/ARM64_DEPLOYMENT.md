@@ -72,6 +72,7 @@ whoami 应显示 root，ARM64 通常显示 aarch64 或 arm64。
     python3 -m venv ~/Customer-service-bot/.venv
 
 升级虚拟环境中的 pip：
+	~/Customer-service-bot/.venv/bin/python -m ensurepip --upgrade
 
     ~/Customer-service-bot/.venv/bin/python \
       -m pip install --upgrade pip
@@ -93,7 +94,7 @@ whoami 应显示 root，ARM64 通常显示 aarch64 或 arm64。
 配置文件直接位于项目目录。先从示例复制：
 
     cd ~/Customer-service-bot
-    cp -n customer-service-bot.env.example customer-service-bot.env
+    cp customer-service-bot.env.example customer-service-bot.env
 
 编辑配置：
 
