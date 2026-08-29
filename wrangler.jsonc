@@ -1,0 +1,50 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "customer-service-bot",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-08-29",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": "./static",
+		"binding": "ASSETS",
+		"run_worker_first": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "customer-service-bot",
+			"migrations_dir": "./migrations",
+			"database_id": "607270b7-8d80-4101-a30d-ce193f0c932c"
+		}
+	],
+	"secrets": {
+		"required": [
+			"TG_BOT_TOKEN",
+			"TG_ADMIN_ID",
+			"CHAT_API_KEY",
+			"TELEGRAM_WEBHOOK_SECRET"
+		]
+	},
+	"vars": {
+		"TELEGRAM_WEBHOOK_URL": "https://customer-service-bot.wzlinbin.workers.dev/telegram/webhook",
+		"CHAT_ALLOWED_ORIGINS": "https://api.api2cn.com",
+		"CHAT_ALLOWED_ORIGIN_REGEX": "^https?://(?:127\\.0\\.0\\.1|localhost)(?::\\d+)?$",
+		"CHAT_POLL_LIMIT": "50",
+		"CHAT_MAX_SESSION_ID_LENGTH": "100",
+		"CHAT_MAX_NICKNAME_LENGTH": "50",
+		"CHAT_MAX_MESSAGE_LENGTH": "2000",
+		"CHAT_MAX_UPLOAD_BYTES": "10485760",
+		"CHAT_DATA_RETENTION_HOURS": "24"
+	},
+	"triggers": {
+		"crons": [
+			"17 * * * *"
+		]
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
+}

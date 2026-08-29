@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local Worker development only.
+# Production values must be configured with `wrangler secret put`.
+TG_BOT_TOKEN=replace-me
+TG_ADMIN_ID=replace-me
+CHAT_API_KEY=replace-me
+TELEGRAM_WEBHOOK_SECRET=replace-me

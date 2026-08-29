@@ -2,6 +2,9 @@
 这是一个基于 **FastAPI** 和 **Telegram Bot** 的轻量级网页在线客服系统。
 用户在网页端发送消息（支持文本和图片），管理员在 Telegram 接收并直接回复，系统会自动将回复推送到网页端。
 
+> Cloudflare Workers 版本位于 `cf-worker` 分支，使用 Workers + D1 + Telegram
+> Webhook。部署步骤见 [Cloudflare Workers 部署文档](docs/CLOUDFLARE_WORKERS_DEPLOYMENT.md)。
+
 ## ✨ 功能特性
 
 * **轻量级**：无需 Redis 或复杂数据库，使用 SQLite。

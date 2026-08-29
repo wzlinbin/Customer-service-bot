@@ -1,0 +1,18 @@
+{
+  "name": "customer-service-bot-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy",
+    "cf:check": "tsc --noEmit && wrangler deploy --dry-run",
+    "cf:types": "wrangler types",
+    "cf:migrate:local": "wrangler d1 migrations apply customer-service-bot --local",
+    "cf:migrate:remote": "wrangler d1 migrations apply customer-service-bot --remote"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "7.0.2",
+    "wrangler": "4.127.1"
+  }
+}
