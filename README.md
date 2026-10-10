@@ -1,91 +1,79 @@
-全部内容来自AI操作
-这是一个基于 **FastAPI** 和 **Telegram Bot** 的轻量级网页在线客服系统。
-用户在网页端发送消息（支持文本和图片），管理员在 Telegram 接收并直接回复，系统会自动将回复推送到网页端。
+# Customer Service Bot
 
-> Cloudflare Workers 版本位于 `cf-worker` 分支，使用 Workers + D1 + Telegram
-> Webhook。部署步骤见 [Cloudflare Workers 部署文档](docs/CLOUDFLARE_WORKERS_DEPLOYMENT.md)。
+基于 Cloudflare Workers、D1 和 Telegram Webhook 的网页客服系统，支持文字、图片和多语言悬浮窗口。统一使用 `main` 分支维护和发布。
 
-## ✨ 功能特性
+## 首次部署
 
-* **轻量级**：无需 Redis 或复杂数据库，使用 SQLite。
-* **双向通讯**：
-    * 用户 -> 网页 -> Telegram
-    * 管理员 -> Telegram (引用回复) -> 网页
-* **支持图片**：用户可以直接发送图片截图。
-* **强制昵称**：用户开始聊天前需输入称呼，方便管理。
-* **临时浏览器会话**：关闭浏览器会话后清除本地会话标识，再次打开不会显示之前的聊天记录。
-* **多语言界面**：根据浏览器语言自动切换英文、德语、西班牙语、日语、简体中文或繁体中文，不匹配时使用简体中文。
-* **即插即用**：可以轻松集成到任何 FastAPI 项目中。
-* **UI 美观**：现代化的悬浮胶囊按钮，适配移动端。
+需要 Node.js 22 或更高版本、Cloudflare 账号和 Telegram Bot。
 
-## 🛠️ 安装与运行
+### 1. 获取代码并登录
 
-### 1. 克隆仓库
-```bash
-git clone https://github.com/wzlinbin/Customer-service-bot.git
+```powershell
+git clone --branch main https://github.com/wzlinbin/Customer-service-bot.git
 cd Customer-service-bot
+npm ci
+npx wrangler login
+npx wrangler whoami
 ```
 
-### 2. 安装依赖
-```bash
-pip install -r requirements.txt
-```
-### 3. 配置机器人
-配置文件固定放在项目根目录：
+### 2. 配置 Worker 和数据库
 
-```bash
-cp customer-service-bot.env.example customer-service-bot.env
-```
+检查 `wrangler.jsonc`：
 
-编辑 `customer-service-bot.env`，至少填写：
+- `name`：Worker 名称，默认 `customer-service-bot`。
+- `d1_databases[0].database_id`：当前账号下的 D1 数据库 ID。
+- `vars.TELEGRAM_WEBHOOK_URL`：实际 Worker 地址加 `/telegram/webhook`。
+- `vars.CHAT_ALLOWED_ORIGINS`：嵌入客服的网站 Origin，例如 `https://api.api2cn.com`。
 
-```env
-TG_BOT_TOKEN=你的_TOKEN
-TG_ADMIN_ID=你的_ID
-CHAT_API_KEY=你生成的共享密钥
+现有部署继续使用原数据库。新账号首次部署时创建数据库，并将返回的 ID 填入 `database_id`，保留 `DB` 绑定名：
+
+```powershell
+npx wrangler d1 create customer-service-bot
 ```
 
-程序会自动读取该文件。操作系统或 systemd 中已经存在的同名环境变量优先级更高。
-真实配置文件已被 `.gitignore` 排除，请勿提交到 Git。
+### 3. 设置生产密钥
 
-其他可配置项包括监听地址和端口、数据库路径、CORS、消息和上传限制、Telegram
-轮询参数，以及临时聊天数据的保留与清理周期。完整配置见
-`customer-service-bot.env.example`。
+逐项运行，按提示输入值：
 
+```powershell
+npx wrangler secret put TG_BOT_TOKEN
+npx wrangler secret put TG_ADMIN_ID
+npx wrangler secret put CHAT_API_KEY
+npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+```
 
+分别为 Telegram Bot Token、接收消息的管理员 ID、网站代理与 Worker 共用的 API 密钥，以及 Telegram Webhook 的随机校验密钥。Webhook 密钥仅使用字母、数字、下划线和连字符。密钥不要写入源码；`.dev.vars` 仅用于本地开发。
 
-# 安装服务
-nano /etc/systemd/system/customer-service-bot.service
+### 4. 初始化并部署
 
-    [Unit]
-    Description=Customer Service Bot
-    Wants=network-online.target
-    After=network-online.target
+```powershell
+npm run cf:check
+npm run cf:migrate:remote
+npm run cf:deploy
+```
 
-    [Service]
-    Type=simple
-    User=root
-    Group=root
-    WorkingDirectory=/root/Customer-service-bot
-    EnvironmentFile=/root/Customer-service-bot/customer-service-bot.env
-    Environment=PYTHONUNBUFFERED=1
-    ExecStart=/root/Customer-service-bot/.venv/bin/python /root/Customer-service-bot/main.py
-    Restart=always
-    RestartSec=5
-    TimeoutStopSec=30
-    KillSignal=SIGINT
-    UMask=0077
+部署会同时上传 Worker 和 `static/chat-widget.js`。Worker 会在收到已鉴权的聊天请求时自动配置 Telegram Webhook；管理员在 Telegram 中引用回复访客消息即可答复。
 
-    NoNewPrivileges=true
-    PrivateTmp=true
-    ProtectSystem=full
-    ReadWritePaths=/root/Customer-service-bot
+客服脚本 `/static/chat-widget.js` 和 `/api/chat/*` 需要 `X-API-Key`。网站应通过同源服务端代理加载脚本、转发 API 请求并添加密钥，浏览器中不放共享密钥。脚本的 `data-api-base` 指向网站代理路径。
 
-    [Install]
-    WantedBy=multi-user.target
+## 日常更新
 
+在项目目录运行：
 
-### 4. 运行示例
+```powershell
+git switch main
+git pull --ff-only origin main
+npm ci
+npm run cf:check
+npm run cf:deploy
+```
 
-sudo systemctl enable customer-service-bot
-sudo systemctl start customer-service-bot
+如果本次更新新增了 `migrations` 文件，部署前运行 `npm run cf:migrate:remote`。普通界面或文案更新无需数据库迁移，也无需重新设置密钥。
+
+部署后在网站按 `Ctrl + F5` 强制刷新。Worker 脚本缓存为 5 分钟；如果网站代理另有缓存，需要同步清理。若脚本 URL 使用 `?v=...` 配合长期缓存，更新其版本参数。
+
+排查运行问题时查看日志：
+
+```powershell
+npx wrangler tail
+```
