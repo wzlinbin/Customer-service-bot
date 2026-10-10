@@ -30,6 +30,7 @@
             messageLabel: "Message",
             send: "Send",
             conversationGreeting: "Welcome to online customer support. Please enter your question or request, and a support agent will reply shortly. Please keep this window open during the conversation.\n\nNormal response hours: Weekdays, 09:00-21:00.",
+            telegramSupport: "Join our TG group for more timely support updates: ",
             loginFailed: "Unable to connect. Please try again later.",
             sendFailed: "Message failed to send. Please try again.",
             uploadFailed: "Image failed to send. Please try again.",
@@ -53,6 +54,7 @@
             messageLabel: "Nachricht",
             send: "Senden",
             conversationGreeting: "Willkommen beim Online-Kundenservice. Bitte geben Sie Ihre Frage oder Ihr Anliegen ein. Unser Kundenservice antwortet Ihnen in Kürze. Bitte schließen Sie dieses Fenster während des Gesprächs nicht.\n\nReguläre Antwortzeiten: Werktags, 09:00-21:00 Uhr.",
+            telegramSupport: "Treten Sie unserer TG-Gruppe bei, um zeitnahe Supportinformationen zu erhalten: ",
             loginFailed: "Verbindung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
             sendFailed: "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
             uploadFailed: "Bild konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
@@ -76,6 +78,7 @@
             messageLabel: "Mensaje",
             send: "Enviar",
             conversationGreeting: "Te damos la bienvenida al servicio de atención al cliente en línea. Escribe tu pregunta o solicitud; un agente te responderá en breve. No cierres esta ventana durante la conversación.\n\nHorario habitual de respuesta: días laborables, de 09:00 a 21:00.",
+            telegramSupport: "Únete a nuestro grupo de TG para recibir información de soporte más oportuna: ",
             loginFailed: "No se pudo conectar. Inténtalo de nuevo más tarde.",
             sendFailed: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
             uploadFailed: "No se pudo enviar la imagen. Inténtalo de nuevo.",
@@ -99,6 +102,7 @@
             messageLabel: "メッセージ",
             send: "送信",
             conversationGreeting: "オンラインカスタマーサポートへようこそ。ご質問やご要望を入力してください。後ほど担当者が回答します。会話中はこのウィンドウを閉じないでください。\n\n通常の対応時間：平日 09:00～21:00。",
+            telegramSupport: "TGグループに参加して、最新のサポート情報を受け取りましょう：",
             loginFailed: "接続できませんでした。しばらくしてからもう一度お試しください。",
             sendFailed: "メッセージを送信できませんでした。もう一度お試しください。",
             uploadFailed: "画像を送信できませんでした。もう一度お試しください。",
@@ -122,6 +126,7 @@
             messageLabel: "输入消息",
             send: "发送",
             conversationGreeting: "欢迎使用在线客服系统，请输入您的问题或请求，稍后客服会进行答复，对话期间请勿关闭窗口。\n\n正常响应时间：工作日 09:00-21:00。",
+            telegramSupport: "加入TG群获取更多及时支持信息，",
             loginFailed: "连接客服失败，请稍后重试",
             sendFailed: "消息发送失败，请稍后重试",
             uploadFailed: "图片发送失败，请稍后重试",
@@ -145,6 +150,7 @@
             messageLabel: "輸入訊息",
             send: "傳送",
             conversationGreeting: "歡迎使用線上客服系統，請輸入您的問題或請求，稍後客服會進行答覆，對話期間請勿關閉視窗。\n\n正常回應時間：工作日 09:00-21:00。",
+            telegramSupport: "加入TG群獲取更多即時支援資訊，",
             loginFailed: "連線客服失敗，請稍後再試",
             sendFailed: "訊息傳送失敗，請稍後再試",
             uploadFailed: "圖片傳送失敗，請稍後再試",
@@ -208,9 +214,11 @@
     var root = host.attachShadow({ mode: "open" });
     root.innerHTML = [
         "<style>",
-        ":host{position:fixed;inset:0;z-index:2147483000;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;color:#1f2937}",
+        ":host{position:fixed;inset:0;z-index:2147483000;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;color:#1f2937;color-scheme:only light}",
         "*{box-sizing:border-box}",
         "button,input{font:inherit}",
+        "input{color:#1f2937;caret-color:#1f2937}",
+        "input::placeholder{color:#98a2b3;opacity:1}",
         "button{border:0}",
         ".launcher-row{position:absolute;right:24px;bottom:24px;display:flex;align-items:center;gap:8px;pointer-events:auto}",
         ".launcher{height:56px;padding:0 24px;border-radius:28px;background:#2867ed;color:#fff;display:flex;align-items:center;gap:11px;font-size:17px;font-weight:700;box-shadow:0 12px 28px rgba(40,103,237,.28);cursor:pointer;transition:transform .18s,background .18s}",
@@ -243,6 +251,8 @@
         ".bubble{max-width:85%;padding:11px 14px;border-radius:8px;font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}",
         ".bubble.self{align-self:flex-end;background:#2867ed;color:#fff;border-top-right-radius:2px;box-shadow:0 4px 10px rgba(40,103,237,.18)}",
         ".bubble.other{align-self:flex-start;background:#fff;color:#344054;border:1px solid #e6e9ef;border-top-left-radius:2px}",
+        ".support-group{margin:16px 0 0}",
+        ".support-group a{color:#2867ed;text-decoration:underline}",
         ".composer{height:68px;flex:0 0 68px;padding:10px 14px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px}",
         ".upload{width:34px;height:34px;display:grid;place-items:center;color:#7b8798;font-size:20px;cursor:pointer;border-radius:4px}",
         ".upload:hover{background:#f2f4f7;color:#2867ed}",
@@ -401,7 +411,17 @@
         messagesView.style.display = "flex";
         status.textContent = nickname;
         if (!greetingShown) {
-            addBubble(t("conversationGreeting"), "other");
+            var greeting = addBubble(t("conversationGreeting"), "other");
+            var supportGroup = document.createElement("p");
+            supportGroup.className = "support-group";
+            supportGroup.textContent = t("telegramSupport");
+            var link = document.createElement("a");
+            link.href = "https://t.me/+uta7qbAyKA81NmU1";
+            link.textContent = link.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            supportGroup.appendChild(link);
+            greeting.appendChild(supportGroup);
             greetingShown = true;
         }
         startPolling();
@@ -447,6 +467,7 @@
         bubble.textContent = content;
         messages.appendChild(bubble);
         messages.scrollTop = messages.scrollHeight;
+        return bubble;
     }
 
     async function request(path, options) {

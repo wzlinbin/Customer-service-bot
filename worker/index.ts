@@ -23,6 +23,7 @@ interface TelegramMessage {
 interface TelegramUpdate {
   update_id?: number;
   message?: TelegramMessage;
+  edited_message?: TelegramMessage;
 }
 
 class HttpError extends Error {
@@ -148,10 +149,33 @@ async function ensureTelegramWebhook(env: Env): Promise<void> {
   }
 
   const configHash = await sha256(`${webhookUrl}\0${env.TELEGRAM_WEBHOOK_SECRET}`);
-  const configured = await env.DB.prepare("SELECT value FROM app_meta WHERE key = ?")
-    .bind("telegram_webhook_config_hash")
-    .first<{ value: string }>();
-  if (configured?.value === configHash) return;
+
+  // Do not trust only our local marker. Telegram webhook state can be changed
+  // externally (for example by an old deployment or a manual setWebhook call).
+  // Checking the live state lets the hourly alarm repair delivery automatically.
+  try {
+    const infoResponse = await fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/getWebhookInfo`);
+    const info = (await infoResponse.json()) as {
+      ok?: boolean;
+      result?: { url?: string; last_error_message?: string };
+    };
+    if (infoResponse.ok && info.ok && info.result?.url === webhookUrl && !info.result.last_error_message) {
+      await env.DB.prepare(
+        `INSERT INTO app_meta (key, value, updated_at)
+         VALUES (?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+      ).bind("telegram_webhook_config_hash", configHash).run();
+      return;
+    }
+    if (info.result?.last_error_message) {
+      console.error(JSON.stringify({
+        event: "telegram_webhook_unhealthy",
+        error: info.result.last_error_message,
+      }));
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ event: "telegram_webhook_info_failed", error: String(error) }));
+  }
 
   const response = await fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/setWebhook`, {
     method: "POST",
@@ -335,7 +359,7 @@ async function handleTelegramWebhook(request: Request, env: Env): Promise<Respon
   } catch {
     throw new HttpError(400, "Invalid JSON body");
   }
-  const message = update.message;
+  const message = update.message ?? update.edited_message;
   if (update.update_id === undefined) {
     console.log(JSON.stringify({ event: "telegram_update_ignored", reason: "missing_update_id" }));
     return json({ success: true });

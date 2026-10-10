@@ -1,3 +1,12 @@
+<style>
+    #chat-box { color: #1f2937; color-scheme: only light; }
+    #chat-box input { color: #1f2937; caret-color: #1f2937; }
+    #chat-box input::placeholder { color: #98a2b3; opacity: 1; }
+    #nickname-input { background: #fff; }
+    #chat-box .support-group { margin: 16px 0 0; overflow-wrap: anywhere; }
+    #chat-box .support-group a { color: #2867ed; text-decoration: underline; }
+</style>
+
 <div id="chat-launcher" onclick="toggleChat()" 
      class="fixed bottom-6 right-6 z-50 cursor-pointer hover:-translate-y-1 transition-transform duration-300 shadow-lg group">
     <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-5 py-3 rounded-full flex items-center gap-2 shadow-blue-500/30">
@@ -47,6 +56,7 @@
             welcome: 'Welcome', nicknamePrompt: 'What should we call you?', nicknamePlaceholder: 'Your name', nicknameLabel: 'Your name',
             start: 'Start chat', sendImage: 'Send image', messagePlaceholder: 'Type a message...', messageLabel: 'Message', send: 'Send',
             conversationGreeting: 'Welcome to online customer support. Please enter your question or request, and a support agent will reply shortly. Please keep this window open during the conversation.\n\nNormal response hours: Weekdays, 09:00-21:00.',
+            telegramSupport: 'Join our TG group for more timely support updates: ',
             emptyNickname: 'Please enter your name first', uploadSending: 'Sending image...', uploadSent: 'Image sent', uploadFailed: 'Image failed to send'
         },
         de: {
@@ -54,6 +64,7 @@
             welcome: 'Willkommen', nicknamePrompt: 'Wie dürfen wir Sie ansprechen?', nicknamePlaceholder: 'Ihr Name', nicknameLabel: 'Ihr Name',
             start: 'Chat starten', sendImage: 'Bild senden', messagePlaceholder: 'Nachricht eingeben...', messageLabel: 'Nachricht', send: 'Senden',
             conversationGreeting: 'Willkommen beim Online-Kundenservice. Bitte geben Sie Ihre Frage oder Ihr Anliegen ein. Unser Kundenservice antwortet Ihnen in Kürze. Bitte schließen Sie dieses Fenster während des Gesprächs nicht.\n\nReguläre Antwortzeiten: Werktags, 09:00-21:00 Uhr.',
+            telegramSupport: 'Treten Sie unserer TG-Gruppe bei, um zeitnahe Supportinformationen zu erhalten: ',
             emptyNickname: 'Bitte geben Sie zuerst Ihren Namen ein', uploadSending: 'Bild wird gesendet...', uploadSent: 'Bild gesendet', uploadFailed: 'Bild konnte nicht gesendet werden'
         },
         es: {
@@ -61,6 +72,7 @@
             welcome: 'Bienvenido', nicknamePrompt: '¿Cómo podemos llamarte?', nicknamePlaceholder: 'Tu nombre', nicknameLabel: 'Tu nombre',
             start: 'Iniciar chat', sendImage: 'Enviar imagen', messagePlaceholder: 'Escribe un mensaje...', messageLabel: 'Mensaje', send: 'Enviar',
             conversationGreeting: 'Te damos la bienvenida al servicio de atención al cliente en línea. Escribe tu pregunta o solicitud; un agente te responderá en breve. No cierres esta ventana durante la conversación.\n\nHorario habitual de respuesta: días laborables, de 09:00 a 21:00.',
+            telegramSupport: 'Únete a nuestro grupo de TG para recibir información de soporte más oportuna: ',
             emptyNickname: 'Introduce tu nombre primero', uploadSending: 'Enviando imagen...', uploadSent: 'Imagen enviada', uploadFailed: 'No se pudo enviar la imagen'
         },
         ja: {
@@ -68,6 +80,7 @@
             welcome: 'お問い合わせありがとうございます', nicknamePrompt: 'お呼びするお名前を入力してください', nicknamePlaceholder: 'お名前', nicknameLabel: 'お名前',
             start: 'チャットを開始', sendImage: '画像を送信', messagePlaceholder: 'メッセージを入力...', messageLabel: 'メッセージ', send: '送信',
             conversationGreeting: 'オンラインカスタマーサポートへようこそ。ご質問やご要望を入力してください。後ほど担当者が回答します。会話中はこのウィンドウを閉じないでください。\n\n通常の対応時間：平日 09:00～21:00。',
+            telegramSupport: 'TGグループに参加して、最新のサポート情報を受け取りましょう：',
             emptyNickname: 'お名前を入力してください', uploadSending: '画像を送信しています...', uploadSent: '画像を送信しました', uploadFailed: '画像を送信できませんでした'
         },
         'zh-CN': {
@@ -75,6 +88,7 @@
             welcome: '欢迎咨询', nicknamePrompt: '请设置一个称呼方便我们称呼您', nicknamePlaceholder: '您的称呼', nicknameLabel: '您的称呼',
             start: '开始对话', sendImage: '发送图片', messagePlaceholder: '输入消息...', messageLabel: '输入消息', send: '发送',
             conversationGreeting: '欢迎使用在线客服系统，请输入您的问题或请求，稍后客服会进行答复，对话期间请勿关闭窗口。\n\n正常响应时间：工作日 09:00-21:00。',
+            telegramSupport: '加入TG群获取更多及时支持信息，',
             emptyNickname: '请先输入称呼', uploadSending: '正在发送图片...', uploadSent: '图片已发送', uploadFailed: '图片发送失败'
         },
         'zh-TW': {
@@ -82,6 +96,7 @@
             welcome: '歡迎諮詢', nicknamePrompt: '請設定稱呼，方便我們稱呼您', nicknamePlaceholder: '您的稱呼', nicknameLabel: '您的稱呼',
             start: '開始對話', sendImage: '傳送圖片', messagePlaceholder: '輸入訊息...', messageLabel: '輸入訊息', send: '傳送',
             conversationGreeting: '歡迎使用線上客服系統，請輸入您的問題或請求，稍後客服會進行答覆，對話期間請勿關閉視窗。\n\n正常回應時間：工作日 09:00-21:00。',
+            telegramSupport: '加入TG群獲取更多即時支援資訊，',
             emptyNickname: '請先輸入稱呼', uploadSending: '正在傳送圖片...', uploadSent: '圖片已傳送', uploadFailed: '圖片傳送失敗'
         }
     };
@@ -141,7 +156,17 @@
         document.getElementById('msg-view').classList.remove('hidden');
         document.getElementById('chat-status').innerText = `${nickname}`;
         if (!greetingShown) {
-            addBubble(chatText('conversationGreeting'), 'other');
+            const greeting = addBubble(chatText('conversationGreeting'), 'other');
+            const supportGroup = document.createElement('p');
+            supportGroup.className = 'support-group';
+            supportGroup.textContent = chatText('telegramSupport');
+            const link = document.createElement('a');
+            link.href = 'https://t.me/+uta7qbAyKA81NmU1';
+            link.textContent = link.href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            supportGroup.appendChild(link);
+            greeting.appendChild(supportGroup);
             greetingShown = true;
         }
         if (!pollTimer) { pollTimer = setInterval(pollMessages, 2000); pollMessages(); }
@@ -196,5 +221,6 @@
         if(isTemp) div.classList.add('opacity-70');
         list.appendChild(div);
         list.scrollTop = list.scrollHeight;
+        return div;
     }
 </script>
