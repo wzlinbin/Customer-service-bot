@@ -3,6 +3,14 @@
 	"name": "customer-service-bot",
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-08-29",
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [
+		{
+			"pattern": "custom.api2cn.com",
+			"custom_domain": true
+		}
+	],
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
@@ -28,7 +36,7 @@
 		]
 	},
 	"vars": {
-		"TELEGRAM_WEBHOOK_URL": "https://customer-service-bot.wzlinbin.workers.dev/telegram/webhook",
+		"TELEGRAM_WEBHOOK_URL": "https://custom.api2cn.com/telegram/webhook",
 		"CHAT_ALLOWED_ORIGINS": "https://api.api2cn.com",
 		"CHAT_ALLOWED_ORIGIN_REGEX": "^https?://(?:127\\.0\\.0\\.1|localhost)(?::\\d+)?$",
 		"CHAT_POLL_LIMIT": "50",

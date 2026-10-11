@@ -22,7 +22,7 @@ npx wrangler whoami
 
 - `name`：Worker 名称，默认 `customer-service-bot`。
 - `d1_databases[0].database_id`：当前账号下的 D1 数据库 ID。
-- `vars.TELEGRAM_WEBHOOK_URL`：实际 Worker 地址加 `/telegram/webhook`。
+- `vars.TELEGRAM_WEBHOOK_URL`：自定义域名加 `/telegram/webhook`，当前为 `https://custom.api2cn.com/telegram/webhook`。
 - `vars.CHAT_ALLOWED_ORIGINS`：嵌入客服的网站 Origin，例如 `https://api.api2cn.com`。
 
 现有部署继续使用原数据库。新账号首次部署时创建数据库，并将返回的 ID 填入 `database_id`，保留 `DB` 绑定名：
@@ -52,7 +52,7 @@ npm run cf:migrate:remote
 npm run cf:deploy
 ```
 
-部署会同时上传 Worker 和 `static/chat-widget.js`。Worker 会在收到已鉴权的聊天请求时自动配置 Telegram Webhook；管理员在 Telegram 中引用回复访客消息即可答复。
+部署会同时上传 Worker 和 `static/chat-widget.js`，并通过 `custom.api2cn.com` 提供服务。生产环境不使用 `workers.dev` 地址。Worker 会在收到已鉴权的聊天请求时自动配置 Telegram Webhook；管理员在 Telegram 中引用回复访客消息即可答复。
 
 客服脚本 `/static/chat-widget.js` 和 `/api/chat/*` 需要 `X-API-Key`。网站应通过同源服务端代理加载脚本、转发 API 请求并添加密钥，浏览器中不放共享密钥。脚本的 `data-api-base` 指向网站代理路径。
 
